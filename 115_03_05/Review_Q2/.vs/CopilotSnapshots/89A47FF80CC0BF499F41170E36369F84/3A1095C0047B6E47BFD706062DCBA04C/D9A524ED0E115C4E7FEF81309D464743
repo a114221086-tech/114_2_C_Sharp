@@ -1,0 +1,240 @@
+﻿namespace Review_Q2
+{
+    public partial class Form1 : Form
+    {
+        private readonly CostCalculator _costCalculator;
+
+        public Form1()
+        {
+            InitializeComponent();
+            _costCalculator = new CostCalculator();
+        }
+
+        /// <summary>
+        /// 計算費用按鈕點擊事件
+        /// </summary>
+        private void BtnCalculate_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // 計算服務費用
+                decimal serviceCost = CalculateSelectedServicesCost();
+
+                // 獲取並驗證零件費用
+                if (!_costCalculator.TryParseAmount(txtPartsAmount.Text, out decimal partsCost))
+                {
+                    MessageBox.Show("請輸入有效的零件費用金額。", "輸入錯誤", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtPartsAmount.Focus();
+                    return;
+                }
+
+                // 獲取並驗證工時
+                if (!_costCalculator.TryParseAmount(txtLaborHours.Text, out decimal laborHours))
+                {
+                    MessageBox.Show("請輸入有效的工時數。", "輸入錯誤", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtLaborHours.Focus();
+                    return;
+                }
+
+                // 計算工資費用
+                decimal laborCost = _costCalculator.CalculateLaborCost(laborHours);
+
+                // 計算零件稅金
+                decimal taxAmount = _costCalculator.CalculatePartsTax(partsCost);
+
+                // 計算服務與工資合計
+                decimal serviceAndLaborTotal = _costCalculator.CalculateServiceAndLaborTotal(serviceCost, laborCost);
+
+                // 計算最終總費用
+                decimal totalCost = _costCalculator.CalculateTotalCost(serviceAndLaborTotal, partsCost, taxAmount);
+
+                // 更新費用顯示
+                txtServiceCost.Text = serviceAndLaborTotal.ToString("N0");
+                txtPartsCost.Text = partsCost.ToString("N0");
+                txtTaxAmount.Text = taxAmount.ToString("N0");
+                txtTotalCost.Text = totalCost.ToString("N0");
+            }
+            catch (ArgumentException ex)
+            {
+                MessageBox.Show($"計算錯誤: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"發生未預期的錯誤: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// 清除按鈕點擊事件
+        /// </summary>
+        private void BtnClear_Click(object sender, EventArgs e)
+        {
+            ClearAllInputs();
+            MessageBox.Show("已清除所有資料。", "清除完成", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// 匯出報表按鈕點擊事件
+        /// </summary>
+        private void BtnExport_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                // 建立報表數據
+                var report = BuildRepairReport();
+
+                // 生成報表文本
+                string reportText = report.GenerateReportText();
+
+                // 顯示保存對話框
+                using (SaveFileDialog saveDialog = new SaveFileDialog())
+                {
+                    saveDialog.Filter = "文本檔案 (*.txt)|*.txt|所有檔案 (*.*)|*.*";
+                    saveDialog.Title = "保存維修報表";
+                    saveDialog.FileName = $"維修報表_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+
+                    if (saveDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        // 保存文件
+                        File.WriteAllText(saveDialog.FileName, reportText, System.Text.Encoding.UTF8);
+                        MessageBox.Show($"報表已成功保存至:\n{saveDialog.FileName}", "保存成功", 
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"匯出報表時發生錯誤: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// 關閉按鈕點擊事件
+        /// </summary>
+        private void BtnExit_Click(object sender, EventArgs e)
+        {
+            // 詢問使用者是否需要保存
+            DialogResult result = MessageBox.Show(
+                "是否要在結束前保存維修明細？",
+                "確認關閉",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Cancel)
+            {
+                return; // 用戶選擇取消，不關閉
+            }
+
+            if (result == DialogResult.Yes)
+            {
+                // 用戶選擇保存，先匯出報表
+                BtnExport_Click(null, null);
+            }
+
+            // 關閉應用
+            this.Close();
+        }
+
+        /// <summary>
+        /// 計算所有選定服務的費用
+        /// </summary>
+        /// <returns>選定服務的總費用</returns>
+        private decimal CalculateSelectedServicesCost()
+        {
+            decimal total = 0;
+
+            // 機油與潤滑服務
+            if (chkOilChange.Checked) total += RepairServiceConstants.OIL_CHANGE_PRICE;
+            if (chkOilFilter.Checked) total += RepairServiceConstants.OIL_FILTER_PRICE;
+
+            // 清洗服務
+            if (chkWaterWash.Checked) total += RepairServiceConstants.WATER_WASH_PRICE;
+            if (chkTransmissionOilClean.Checked) total += RepairServiceConstants.TRANSMISSION_OIL_CLEAN_PRICE;
+
+            // 其他維修服務
+            if (chkInspection.Checked) total += RepairServiceConstants.INSPECTION_PRICE;
+            if (chkMufflerReplacement.Checked) total += RepairServiceConstants.MUFFLER_REPLACEMENT_PRICE;
+            if (chkTireRotation.Checked) total += RepairServiceConstants.TIRE_ROTATION_PRICE;
+
+            return total;
+        }
+
+        /// <summary>
+        /// 清除所有輸入和顯示
+        /// </summary>
+        private void ClearAllInputs()
+        {
+            // 取消所有複選框
+            chkOilChange.Checked = false;
+            chkOilFilter.Checked = false;
+            chkWaterWash.Checked = false;
+            chkTransmissionOilClean.Checked = false;
+            chkInspection.Checked = false;
+            chkMufflerReplacement.Checked = false;
+            chkTireRotation.Checked = false;
+
+            // 清除輸入欄位
+            txtPartsAmount.Clear();
+            txtLaborHours.Clear();
+
+            // 清除顯示欄位
+            txtServiceCost.Clear();
+            txtPartsCost.Clear();
+            txtTaxAmount.Clear();
+            txtTotalCost.Clear();
+        }
+
+        /// <summary>
+        /// 構建維修報表
+        /// </summary>
+        /// <returns>維修報表物件</returns>
+        private RepairReport BuildRepairReport()
+        {
+            var report = new RepairReport();
+
+            // 添加選定的服務項目
+            if (chkOilChange.Checked) report.SelectedServices.Add("更換機油 (NT$780)");
+            if (chkOilFilter.Checked) report.SelectedServices.Add("潤滑保養 (NT$540)");
+            if (chkWaterWash.Checked) report.SelectedServices.Add("水箱清洗 (NT$900)");
+            if (chkTransmissionOilClean.Checked) report.SelectedServices.Add("變速箱清洗 (NT$2,400)");
+            if (chkInspection.Checked) report.SelectedServices.Add("檢驗 (NT$450)");
+            if (chkMufflerReplacement.Checked) report.SelectedServices.Add("更換消音器 (NT$3,000)");
+            if (chkTireRotation.Checked) report.SelectedServices.Add("輪胎換位 (NT$600)");
+
+            // 從顯示欄位獲取費用數據
+            if (decimal.TryParse(txtServiceCost.Text, out decimal serviceCost))
+            {
+                report.ServiceCost = serviceCost;
+            }
+
+            if (decimal.TryParse(txtPartsCost.Text, out decimal partsCost))
+            {
+                report.PartsCost = partsCost;
+            }
+
+            if (decimal.TryParse(txtTaxAmount.Text, out decimal taxAmount))
+            {
+                report.TaxAmount = taxAmount;
+            }
+
+            if (decimal.TryParse(txtTotalCost.Text, out decimal totalCost))
+            {
+                report.TotalCost = totalCost;
+            }
+
+            // 獲取工時和零件費用
+            if (decimal.TryParse(txtLaborHours.Text, out decimal laborHours))
+            {
+                report.LaborHours = laborHours;
+                report.LaborCost = laborHours * RepairServiceConstants.LABOR_HOURLY_RATE;
+            }
+
+            if (decimal.TryParse(txtPartsAmount.Text, out decimal partsAmount))
+            {
+                report.PartsAmount = partsAmount;
+            }
+
+            return report;
+        }
+    }
+}
