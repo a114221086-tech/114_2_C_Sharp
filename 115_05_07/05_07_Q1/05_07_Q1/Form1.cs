@@ -1,0 +1,199 @@
+using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace _05_07_Q1
+{
+    public partial class Form1 : Form
+    {
+        // 程式狀態變數
+        private readonly Random rand = new();
+        private int n1 = 0, n2 = 1, n3 = 2;
+        private int prize = 0;
+        private int balance = 0;
+        private int totalDeposited = 0;
+        private int totalSpins = 0;
+        private int winCount = 0;
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            // 初始化下注選項（固定項目）
+            comboBox_bet.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboBox_bet.Items.Clear();
+            comboBox_bet.Items.AddRange(new object[] { "$1", "$5", "$10", "$50" });
+            comboBox_bet.SelectedIndex = 0;
+
+            // 如果沒有真實圖片，建立佔位圖片以避免 exception
+            imageList1.ImageSize = new Size(120, 120);
+            imageList1.ColorDepth = ColorDepth.Depth32Bit;
+            imageList1.Images.Clear();
+            for (int i = 0; i < 10; i++)
+            {
+                var bmp = new Bitmap(120, 120);
+                using (Graphics g = Graphics.FromImage(bmp))
+                {
+                    g.Clear(Color.FromArgb((i * 40) % 255, (i * 80) % 255, (i * 120) % 255));
+                    using Font f = new Font("Segoe UI", 36, FontStyle.Bold);
+                    TextRenderer.DrawText(g, i.ToString(), f, new Point(18, 28), Color.White);
+                }
+                imageList1.Images.Add(bmp);
+            }
+
+            // 顯示預設圖片
+            pictureBox1.Image = imageList1.Images[0];
+            pictureBox2.Image = imageList1.Images[1 % imageList1.Images.Count];
+            pictureBox3.Image = imageList1.Images[2 % imageList1.Images.Count];
+
+            UpdateUI();
+            UpdateStats();
+        }
+
+        private void button_deposit_Click(object sender, EventArgs e)
+        {
+            if (!int.TryParse(textBox_deposit.Text.Trim(), out int amount) || amount <= 0)
+            {
+                MessageBox.Show("請輸入有效的存入金額（必須為正整數）", "輸入錯誤", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            balance += amount;
+            totalDeposited += amount;
+            textBox_deposit.Clear();
+            UpdateUI();
+            UpdateStats();
+        }
+
+        private void comboBox_bet_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateUI();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            int bet = GetBetAmount();
+            if (bet <= 0)
+            {
+                MessageBox.Show("請選擇有效的下注金額。", "下注錯誤", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (balance < bet)
+            {
+                MessageBox.Show("餘額不足，請先存入或選擇較低的下注金額。", "餘額不足", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                UpdateUI();
+                return;
+            }
+
+            // 扣款
+            balance -= bet;
+
+            // 取得並顯示三個隨機圖示索引
+            getImage();
+
+            // 判斷勝負並更新統計
+            checkWinner(bet);
+
+            UpdateUI();
+            UpdateStats();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            // 計算結算資訊
+            int netGain = balance - totalDeposited;
+            string resultLine;
+            if (netGain < 0)
+                resultLine = $"虧損：${Math.Abs(netGain):N2}";
+            else if (netGain > 0)
+                resultLine = $"盈利：${netGain:N2}";
+            else
+                resultLine = $"平手：${netGain:N2}";
+
+            string msg = string.Format(
+                "累計存入：${0:N2}\r\n目前餘額：${1:N2}\r\n{2}\r\n\r\n旋轉次數：{3} 次　中獎次數：{4} 次",
+                totalDeposited,
+                balance,
+                resultLine,
+                totalSpins,
+                winCount);
+
+            MessageBox.Show(msg, "結算摘要", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            // 關閉主表單
+            this.Close();
+        }
+
+        private int GetBetAmount()
+        {
+            if (comboBox_bet.SelectedItem == null)
+                return 0;
+            string s = comboBox_bet.SelectedItem.ToString().Trim();
+            if (s.StartsWith("$"))
+                s = s.Substring(1);
+            if (int.TryParse(s, out int bet))
+                return bet;
+            return 0;
+        }
+
+        private void getImage()
+        {
+            if (imageList1.Images.Count == 0)
+                return;
+
+            n1 = rand.Next(0, imageList1.Images.Count);
+            n2 = rand.Next(0, imageList1.Images.Count);
+            n3 = rand.Next(0, imageList1.Images.Count);
+
+            pictureBox1.Image = imageList1.Images[n1];
+            pictureBox2.Image = imageList1.Images[n2];
+            pictureBox3.Image = imageList1.Images[n3];
+        }
+
+        private void checkWinner(int bet)
+        {
+            prize = 0;
+            if (n1 == n2 && n2 == n3)
+            {
+                prize = bet * 10; // 頭獎
+            }
+            else if (n1 == n2 || n1 == n3 || n2 == n3)
+            {
+                prize = bet * 2; // 普獎
+            }
+
+            if (prize > 0)
+            {
+                balance += prize;
+                winCount++;
+            }
+
+            totalSpins++;
+        }
+
+        private void UpdateUI()
+        {
+            label_balance.Text = $"目前餘額：${balance:N2}";
+            label_lastWin.Text = $"本次獲得：${prize:N2}";
+
+            // 旋轉按鈕狀態：程式啟動時 balance = 0 => 停用；若 balance < 目前下注金額 => 停用
+            int curBet = GetBetAmount();
+            if (curBet <= 0)
+                button1.Enabled = false;
+            else
+                button1.Enabled = (balance >= curBet && balance > 0);
+        }
+
+        private void UpdateStats()
+        {
+            label_totalSpins.Text = $"累計旋轉：{totalSpins}";
+            label_winCount.Text = $"累計中獎：{winCount}";
+            double rate = totalSpins == 0 ? 0.0 : ((double)winCount / totalSpins) * 100.0;
+            label_winRate.Text = $"勝率：{rate:F2}%";
+        }
+    }
+}
