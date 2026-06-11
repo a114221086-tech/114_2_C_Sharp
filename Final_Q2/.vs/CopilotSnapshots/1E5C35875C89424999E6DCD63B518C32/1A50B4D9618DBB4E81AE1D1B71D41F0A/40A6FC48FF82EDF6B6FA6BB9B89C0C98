@@ -1,0 +1,43 @@
+﻿namespace WinFormsApp1
+{
+    public class Employee
+    {
+        public string Name { get; set; } = string.Empty;
+        public int IdNumber { get; set; }
+        public string Department { get; set; } = string.Empty;
+        public string Position { get; set; } = string.Empty;
+
+        // 無參數建構子
+        public Employee()
+        {
+            Name = string.Empty;
+            IdNumber = 0;
+            Department = string.Empty;
+            Position = string.Empty;
+        }
+
+        // 兩參數建構子 - 可設定 Name, IdNumber
+        public Employee(string name, int idNumber)
+        {
+            Name = name;
+            IdNumber = idNumber;
+            Department = string.Empty;
+            Position = string.Empty;
+        }
+
+        // 四參數建構子
+        public Employee(string name, int idNumber, string department, string position)
+        {
+            Name = name;
+            IdNumber = idNumber;
+            Department = department;
+            Position = position;
+        }
+
+        public override string ToString()
+        {
+            // 顯示格式：IdNumber Name
+            return $"{IdNumber} {Name}";
+        }
+    }
+}

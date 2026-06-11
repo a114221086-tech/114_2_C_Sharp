@@ -1,0 +1,137 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Windows.Forms;
+
+namespace WinFormsApp1
+{
+    public partial class Form1 : Form
+    {
+        private List<Employee> employees = new List<Employee>();
+
+        public Form1()
+        {
+            InitializeComponent();
+            this.Load += Form1_Load;
+        }
+
+        private void Form1_Load(object? sender, EventArgs e)
+        {
+            RefreshEmployeeList();
+        }
+
+        private void buttonAdd_Click(object sender, EventArgs e)
+        {
+            var id = textBoxId.Text.Trim();
+            var name = textBoxName.Text.Trim();
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(name))
+            {
+                MessageBox.Show("請輸入員工編號與姓名。", "資料不足", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (employees.Any(x => x.Id == id))
+            {
+                MessageBox.Show("這個員工編號已存在。", "重複編號", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            employees.Add(new Employee { Id = id, Name = name });
+            RefreshEmployeeList();
+            ClearInputs();
+        }
+
+        private void buttonDelete_Click(object sender, EventArgs e)
+        {
+            var id = textBoxId.Text.Trim();
+            if (string.IsNullOrEmpty(id))
+            {
+                MessageBox.Show("請輸入欲刪除之員工編號。", "資料不足", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var emp = employees.FirstOrDefault(x => x.Id == id);
+            if (emp == null)
+            {
+                MessageBox.Show("找不到指定員工。", "刪除失敗", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var confirm = MessageBox.Show($"確定要刪除 {emp.Id} - {emp.Name} 嗎?", "確認刪除", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (confirm == DialogResult.Yes)
+            {
+                employees.Remove(emp);
+                RefreshEmployeeList();
+                ClearInputs();
+            }
+        }
+
+        private void buttonUpdate_Click(object sender, EventArgs e)
+        {
+            var id = textBoxId.Text.Trim();
+            var name = textBoxName.Text.Trim();
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(name))
+            {
+                MessageBox.Show("請輸入員工編號與姓名。", "資料不足", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var emp = employees.FirstOrDefault(x => x.Id == id);
+            if (emp == null)
+            {
+                MessageBox.Show("找不到指定員工。", "更新失敗", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            emp.Name = name;
+            RefreshEmployeeList();
+            ClearInputs();
+        }
+
+        private void buttonSearch_Click(object sender, EventArgs e)
+        {
+            var key = textBoxId.Text.Trim();
+            var nameKey = textBoxName.Text.Trim();
+
+            IEnumerable<Employee> result = employees;
+            if (!string.IsNullOrEmpty(key))
+                result = result.Where(x => x.Id.Contains(key));
+            if (!string.IsNullOrEmpty(nameKey))
+                result = result.Where(x => x.Name.Contains(nameKey));
+
+            RefreshEmployeeList(result.ToList());
+        }
+
+        private void buttonClear_Click(object sender, EventArgs e)
+        {
+            ClearInputs();
+            RefreshEmployeeList();
+        }
+
+        private void listBoxEmployees_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (listBoxEmployees.SelectedItem is Employee emp)
+            {
+                textBoxId.Text = emp.Id;
+                textBoxName.Text = emp.Name;
+            }
+        }
+
+        private void RefreshEmployeeList(List<Employee>? list = null)
+        {
+            listBoxEmployees.Items.Clear();
+            var source = list ?? employees;
+            foreach (var emp in source)
+            {
+                listBoxEmployees.Items.Add(emp);
+            }
+        }
+
+        private void ClearInputs()
+        {
+            textBoxId.Text = string.Empty;
+            textBoxName.Text = string.Empty;
+            listBoxEmployees.ClearSelected();
+        }
+    }
+}

@@ -1,0 +1,155 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
+
+namespace WinFormsApp1
+{
+    public partial class Form1 : Form
+    {
+        private struct MorseEntry
+        {
+            public char Character;
+            public string Code;
+        }
+
+        private List<MorseEntry> morseTable = new List<MorseEntry>();
+
+        public Form1()
+        {
+            InitializeComponent();
+            LoadMorseTable();
+        }
+
+        private void LoadMorseTable()
+        {
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "morse_code_table.md");
+            if (!File.Exists(path))
+            {
+                MessageBox.Show($"找不到 morse_code_table.md 檔案：{path}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            using (StreamReader inputFile = File.OpenText(path))
+            {
+                // Skip header lines until the table body
+                while (!inputFile.EndOfStream)
+                {
+                    string line = inputFile.ReadLine();
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+
+                    // The markdown table rows start with '|', ignore the table header separator row
+                    if (line.TrimStart().StartsWith("| Character "))
+                        continue;
+                    if (line.TrimStart().StartsWith("| :---"))
+                        continue;
+
+                    // Process table row lines
+                    if (line.TrimStart().StartsWith("|"))
+                    {
+                        // Split columns by '|'
+                        var parts = line.Split('|').Select(p => p.Trim()).Where(p => p.Length > 0).ToArray();
+                        // The table uses 8 columns (pairs of Character/Code). Iterate.
+                        for (int i = 0; i + 1 < parts.Length; i += 2)
+                        {
+                            string charText = parts[i];
+                            string codeText = parts[i + 1];
+
+                            if (string.IsNullOrEmpty(charText) || string.IsNullOrEmpty(codeText))
+                                continue;
+
+                            // Clean code text from backticks
+                            codeText = codeText.Trim();
+                            if (codeText.StartsWith("`") && codeText.EndsWith("`"))
+                                codeText = codeText.Substring(1, codeText.Length - 2);
+
+                            // handle special 'space' keyword and punctuation and question mark
+                            char ch;
+                            if (charText.Equals("space", StringComparison.OrdinalIgnoreCase))
+                            {
+                                ch = ' ';
+                                // represent space code as '/'
+                                if (codeText.Equals("*space*", StringComparison.OrdinalIgnoreCase))
+                                    codeText = "/";
+                            }
+                            else if (charText.Length == 1)
+                            {
+                                ch = char.ToUpperInvariant(charText[0]);
+                            }
+                            else
+                            {
+                                // For names like "comma" or "period" or "?" or other words
+                                if (charText.Equals("comma", StringComparison.OrdinalIgnoreCase))
+                                    ch = ',';
+                                else if (charText.Equals("period", StringComparison.OrdinalIgnoreCase))
+                                    ch = '.';
+                                else if (charText.Equals("?", StringComparison.OrdinalIgnoreCase) || charText == "?"
+                                    || charText.Equals("?", StringComparison.Ordinal))
+                                    ch = '?';
+                                else
+                                    continue; // skip unknown label
+                            }
+
+                            // Add to list if not exists
+                            if (!morseTable.Any(e => e.Character == ch))
+                            {
+                                MorseEntry me = new MorseEntry { Character = ch, Code = codeText };
+                                morseTable.Add(me);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Ensure letters A-Z and digits 0-9 are present by normalizing keys to uppercase
+            // Already added as uppercase for single chars
+        }
+
+        private void ButtonConvert_Click(object? sender, EventArgs e)
+        {
+            listBoxLookup.Items.Clear();
+            textBoxFullMorse.Clear();
+
+            string input = textBoxInput.Text;
+            if (string.IsNullOrEmpty(input))
+                return;
+
+            List<string> morsePieces = new List<string>();
+
+            foreach (char raw in input)
+            {
+                char ch = raw;
+                if (char.IsLetter(ch))
+                    ch = char.ToUpperInvariant(ch);
+
+                // find in morseTable
+                var entry = morseTable.FirstOrDefault(m => m.Character == ch);
+                if (entry.Code != null)
+                {
+                    morsePieces.Add(entry.Code);
+                    // Show per-letter mapping in listbox like "A  .-"
+                    string displayChar = ch == ' ' ? "空白" : ch.ToString();
+                    listBoxLookup.Items.Add($"{displayChar}  {entry.Code}");
+                }
+                else
+                {
+                    // unknown char - show placeholder and skip
+                    morsePieces.Add("?");
+                    listBoxLookup.Items.Add($"{ch}  (無對應)");
+                }
+            }
+
+            // Join with space between letters, but keep space-coded "/" as separate token
+            textBoxFullMorse.Text = string.Join(" ", morsePieces);
+        }
+
+        private void ButtonClear_Click(object? sender, EventArgs e)
+        {
+            textBoxInput.Clear();
+            textBoxFullMorse.Clear();
+            listBoxLookup.Items.Clear();
+        }
+    }
+}

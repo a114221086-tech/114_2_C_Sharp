@@ -1,0 +1,78 @@
+﻿using System;
+using System.Linq;
+using System.Windows.Forms;
+
+namespace WinFormsApp1
+{
+    public class SearchEmployeeForm : Form
+    {
+        private TextBox textId;
+        private Button btnSearch;
+        private Button btnClose;
+        private ListBox listBoxResult;
+
+        public SearchEmployeeForm()
+        {
+            this.Text = "查詢員工";
+            this.ClientSize = new System.Drawing.Size(600, 420);
+
+            var lblTitle = new Label { Text = "查詢員工", Font = new System.Drawing.Font("微軟正黑體", 24F), AutoSize = true, Location = new System.Drawing.Point(20, 10) };
+            this.Controls.Add(lblTitle);
+
+            var lblId = new Label { Text = "員工編號：", Location = new System.Drawing.Point(20, 70), AutoSize = true };
+            textId = new TextBox { Location = new System.Drawing.Point(120, 66), Width = 360 };
+            this.Controls.Add(lblId);
+            this.Controls.Add(textId);
+
+            btnSearch = new Button { Text = "查詢", Location = new System.Drawing.Point(200, 110), Size = new System.Drawing.Size(100, 36) };
+            btnSearch.Click += BtnSearch_Click;
+            this.Controls.Add(btnSearch);
+
+            btnClose = new Button { Text = "離開", Location = new System.Drawing.Point(320, 110), Size = new System.Drawing.Size(100, 36) };
+            btnClose.Click += (s, e) => this.Close();
+            this.Controls.Add(btnClose);
+
+            listBoxResult = new ListBox { Location = new System.Drawing.Point(20, 160), Size = new System.Drawing.Size(560, 220) };
+            this.Controls.Add(listBoxResult);
+
+            // show all initially
+            RefreshAll();
+        }
+
+        private void BtnSearch_Click(object? sender, EventArgs e)
+        {
+            listBoxResult.Items.Clear();
+            var idText = textId.Text.Trim();
+
+            if (string.IsNullOrEmpty(idText))
+            {
+                // show all
+                RefreshAll();
+                return;
+            }
+
+            if (!int.TryParse(idText, out int id))
+            {
+                MessageBox.Show("員工編號需為數字。", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var emp = EmployeeStore.Employees.FirstOrDefault(x => x.IdNumber == id);
+            if (emp != null)
+            {
+                listBoxResult.Items.Add(emp);
+            }
+            else
+            {
+                MessageBox.Show("找不到該員工。", "資訊", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void RefreshAll()
+        {
+            listBoxResult.Items.Clear();
+            foreach (var emp in EmployeeStore.Employees.OrderBy(x => x.IdNumber))
+                listBoxResult.Items.Add(emp);
+        }
+    }
+}

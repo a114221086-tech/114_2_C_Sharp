@@ -1,0 +1,9 @@
+﻿using System.Collections.Generic;
+
+namespace WinFormsApp1
+{
+    public static class EmployeeStore
+    {
+        public static List<Employee> Employees { get; } = new List<Employee>();
+    }
+}

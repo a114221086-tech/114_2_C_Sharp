@@ -1,0 +1,142 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
+
+namespace WinFormsApp1
+{
+    public partial class Form1 : Form
+    {
+        // 每一筆摩斯碼資料，使用 struct 儲存：字元與對應的摩斯代碼
+        private struct MorseEntry
+        {
+            // 儲存對應的字元（例如 'A', '1', 或空白 ' '）
+            public char Character;
+            // 儲存摩斯碼字串（例如 ".-" 或 "-----"，空白以 "/" 表示）
+            public string Code;
+        }
+
+        // 使用 List 儲存整張摩斯密碼表（題目要求不可使用 Dictionary）
+        private List<MorseEntry> morseTable = new List<MorseEntry>();
+
+        public Form1()
+        {
+            InitializeComponent();
+            LoadMorseTable();
+        }
+
+        private void LoadMorseTable()
+        {
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "morse_code_table.md");
+            if (!File.Exists(path))
+            {
+                MessageBox.Show($"找不到 morse_code_table.md 檔案：{path}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // 以 File.OpenText 開啟檔案並使用 StreamReader 讀取
+            using (StreamReader inputFile = File.OpenText(path))
+            {
+                // 使用 !inputFile.EndOfStream 判斷是否還有未讀取資料
+                while (!inputFile.EndOfStream)
+                {
+                    string line = inputFile.ReadLine();
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+
+                    // 預期每行格式為: "A .-" 或 "0 -----"，以空白分割字元與摩斯碼
+                    var parts = line.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2)
+                        continue;
+
+                    string key = parts[0];
+                    string code = parts[1];
+
+                    char ch;
+                    // 處理特殊的 'space' 標記（若出現），並將其映射為空白字元
+                    if (key.Equals("space", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ch = ' ';
+                        // 若表格使用 *space* 表示，轉為 "/" 顯示於摩斯輸出
+                        if (string.IsNullOrEmpty(code) || code == "*space*")
+                            code = "/";
+                    }
+                    else if (key.Length == 1)
+                    {
+                        // 單一字元（字母或數字），字母統一轉為大寫以利比對
+                        ch = key[0];
+                        if (char.IsLetter(ch))
+                            ch = char.ToUpperInvariant(ch);
+                    }
+                    else
+                    {
+                        // 處理像 comma/period 等文字標籤的情況
+                        if (key.Equals("comma", StringComparison.OrdinalIgnoreCase))
+                            ch = ',';
+                        else if (key.Equals("period", StringComparison.OrdinalIgnoreCase))
+                            ch = '.';
+                        else if (key.Equals("question", StringComparison.OrdinalIgnoreCase) || key == "?")
+                            ch = '?';
+                        else
+                            continue;
+                    }
+
+                    // 若尚未存在於 morseTable，則加入（避免重複）
+                    if (!morseTable.Any(e => e.Character == ch))
+                    {
+                        MorseEntry entry = new MorseEntry { Character = ch, Code = code };
+                        morseTable.Add(entry);
+                    }
+                }
+            }
+
+            // ensure space mapping exists
+            if (!morseTable.Any(e => e.Character == ' '))
+            {
+                morseTable.Add(new MorseEntry { Character = ' ', Code = "/" });
+            }
+        }
+
+        private void ButtonConvert_Click(object? sender, EventArgs e)
+        {
+            listBoxLookup.Items.Clear();
+            textBoxFullMorse.Clear();
+
+            string input = textBoxInput.Text;
+            if (string.IsNullOrEmpty(input))
+                return;
+
+            List<string> morsePieces = new List<string>();
+
+            foreach (char raw in input)
+            {
+                char ch = raw;
+                if (char.IsLetter(ch))
+                    ch = char.ToUpperInvariant(ch);
+
+                var entry = morseTable.FirstOrDefault(m => m.Character == ch);
+                if (!string.IsNullOrEmpty(entry.Code))
+                {
+                    morsePieces.Add(entry.Code);
+                    string displayChar = ch == ' ' ? "空白" : ch.ToString();
+                    listBoxLookup.Items.Add($"{displayChar}  {entry.Code}");
+                }
+                else
+                {
+                    morsePieces.Add("?");
+                    listBoxLookup.Items.Add($"{ch}  (無對應)");
+                }
+            }
+
+            textBoxFullMorse.Text = string.Join(" ", morsePieces);
+        }
+
+        private void ButtonClear_Click(object? sender, EventArgs e)
+        {
+            textBoxInput.Clear();
+            textBoxFullMorse.Clear();
+            listBoxLookup.Items.Clear();
+        }
+    }
+}

@@ -1,0 +1,134 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Windows.Forms;
+
+namespace WinFormsApp1
+{
+    public partial class Form1 : Form
+    {
+        private struct MorseEntry
+        {
+            public char Character;
+            public string Code;
+        }
+
+        private List<MorseEntry> morseTable = new List<MorseEntry>();
+
+        public Form1()
+        {
+            InitializeComponent();
+            LoadMorseTable();
+        }
+
+        private void LoadMorseTable()
+        {
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "morse_code_table.md");
+            if (!File.Exists(path))
+            {
+                MessageBox.Show($"找不到 morse_code_table.md 檔案：{path}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            using (StreamReader inputFile = File.OpenText(path))
+            {
+                while (!inputFile.EndOfStream)
+                {
+                    string line = inputFile.ReadLine();
+                    if (string.IsNullOrWhiteSpace(line))
+                        continue;
+
+                    // Each line expected like: "A .-" or "0 -----"
+                    var parts = line.Trim().Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length < 2)
+                        continue;
+
+                    string key = parts[0];
+                    string code = parts[1];
+
+                    char ch;
+                    if (key.Equals("space", StringComparison.OrdinalIgnoreCase))
+                    {
+                        ch = ' ';
+                        // represent space as '/'
+                        if (string.IsNullOrEmpty(code) || code == "*space*")
+                            code = "/";
+                    }
+                    else if (key.Length == 1)
+                    {
+                        ch = key[0];
+                        if (char.IsLetter(ch))
+                            ch = char.ToUpperInvariant(ch);
+                    }
+                    else
+                    {
+                        // handle common word labels
+                        if (key.Equals("comma", StringComparison.OrdinalIgnoreCase))
+                            ch = ',';
+                        else if (key.Equals("period", StringComparison.OrdinalIgnoreCase))
+                            ch = '.';
+                        else if (key.Equals("question", StringComparison.OrdinalIgnoreCase) || key == "?")
+                            ch = '?';
+                        else
+                            continue;
+                    }
+
+                    // avoid duplicates
+                    if (!morseTable.Any(e => e.Character == ch))
+                    {
+                        MorseEntry entry = new MorseEntry { Character = ch, Code = code };
+                        morseTable.Add(entry);
+                    }
+                }
+            }
+
+            // ensure space mapping exists
+            if (!morseTable.Any(e => e.Character == ' '))
+            {
+                morseTable.Add(new MorseEntry { Character = ' ', Code = "/" });
+            }
+        }
+
+        private void ButtonConvert_Click(object? sender, EventArgs e)
+        {
+            listBoxLookup.Items.Clear();
+            textBoxFullMorse.Clear();
+
+            string input = textBoxInput.Text;
+            if (string.IsNullOrEmpty(input))
+                return;
+
+            List<string> morsePieces = new List<string>();
+
+            foreach (char raw in input)
+            {
+                char ch = raw;
+                if (char.IsLetter(ch))
+                    ch = char.ToUpperInvariant(ch);
+
+                var entry = morseTable.FirstOrDefault(m => m.Character == ch);
+                if (!string.IsNullOrEmpty(entry.Code))
+                {
+                    morsePieces.Add(entry.Code);
+                    string displayChar = ch == ' ' ? "空白" : ch.ToString();
+                    listBoxLookup.Items.Add($"{displayChar}  {entry.Code}");
+                }
+                else
+                {
+                    morsePieces.Add("?");
+                    listBoxLookup.Items.Add($"{ch}  (無對應)");
+                }
+            }
+
+            textBoxFullMorse.Text = string.Join(" ", morsePieces);
+        }
+
+        private void ButtonClear_Click(object? sender, EventArgs e)
+        {
+            textBoxInput.Clear();
+            textBoxFullMorse.Clear();
+            listBoxLookup.Items.Clear();
+        }
+    }
+}

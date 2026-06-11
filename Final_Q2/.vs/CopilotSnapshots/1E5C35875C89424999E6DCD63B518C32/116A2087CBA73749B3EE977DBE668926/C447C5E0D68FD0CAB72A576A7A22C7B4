@@ -1,0 +1,70 @@
+﻿using System;
+using System.Linq;
+using System.Windows.Forms;
+
+namespace WinFormsApp1
+{
+    public class SearchEmployeeForm : Form
+    {
+        private TextBox textId;
+        private TextBox textName;
+        private Button btnSearch;
+        private Button btnClose;
+        private ListBox listBoxResult;
+
+        public SearchEmployeeForm()
+        {
+            this.Text = "查詢員工";
+            this.ClientSize = new System.Drawing.Size(500, 420);
+
+            var lblTitle = new Label { Text = "查詢員工", Font = new System.Drawing.Font("微軟正黑體", 18F), AutoSize = true, Location = new System.Drawing.Point(20, 10) };
+            this.Controls.Add(lblTitle);
+
+            var lblId = new Label { Text = "員工編號：", Location = new System.Drawing.Point(20, 60), AutoSize = true };
+            textId = new TextBox { Location = new System.Drawing.Point(120, 56), Width = 200 };
+            this.Controls.Add(lblId);
+            this.Controls.Add(textId);
+
+            var lblName = new Label { Text = "姓名：", Location = new System.Drawing.Point(20, 100), AutoSize = true };
+            textName = new TextBox { Location = new System.Drawing.Point(120, 96), Width = 200 };
+            this.Controls.Add(lblName);
+            this.Controls.Add(textName);
+
+            btnSearch = new Button { Text = "查詢", Location = new System.Drawing.Point(120, 140), Size = new System.Drawing.Size(100, 30) };
+            btnSearch.Click += BtnSearch_Click;
+            this.Controls.Add(btnSearch);
+
+            btnClose = new Button { Text = "離開", Location = new System.Drawing.Point(240, 140), Size = new System.Drawing.Size(100, 30) };
+            btnClose.Click += (s, e) => this.Close();
+            this.Controls.Add(btnClose);
+
+            listBoxResult = new ListBox { Location = new System.Drawing.Point(20, 180), Size = new System.Drawing.Size(460, 200) };
+            this.Controls.Add(listBoxResult);
+
+            RefreshAll();
+        }
+
+        private void BtnSearch_Click(object? sender, EventArgs e)
+        {
+            listBoxResult.Items.Clear();
+            var idText = textId.Text.Trim();
+            var nameText = textName.Text.Trim();
+
+            var result = EmployeeStore.Employees.AsEnumerable();
+            if (!string.IsNullOrEmpty(idText) && int.TryParse(idText, out int id))
+                result = result.Where(x => x.IdNumber == id);
+            if (!string.IsNullOrEmpty(nameText))
+                result = result.Where(x => x.Name.Contains(nameText));
+
+            foreach (var emp in result.OrderBy(x => x.IdNumber))
+                listBoxResult.Items.Add(emp);
+        }
+
+        private void RefreshAll()
+        {
+            listBoxResult.Items.Clear();
+            foreach (var emp in EmployeeStore.Employees.OrderBy(x => x.IdNumber))
+                listBoxResult.Items.Add(emp);
+        }
+    }
+}

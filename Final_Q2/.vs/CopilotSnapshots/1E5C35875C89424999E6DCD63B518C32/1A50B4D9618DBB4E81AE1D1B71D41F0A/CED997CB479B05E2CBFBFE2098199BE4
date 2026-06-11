@@ -1,0 +1,36 @@
+﻿using System;
+using System.IO;
+using System.Windows.Forms;
+
+namespace WinFormsApp1
+{
+    internal static class Program
+    {
+        /// <summary>
+        ///  The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
+        {
+            // To customize application configuration such as set high DPI settings or default font,
+            // see https://aka.ms/applicationconfiguration.
+            ApplicationConfiguration.Initialize();
+
+            var dataPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "employees.txt");
+            // Load existing data if present
+            EmployeeStore.LoadFromFile(dataPath);
+
+            Application.Run(new Form1());
+
+            // Save data back on exit
+            try
+            {
+                EmployeeStore.SaveToFile(dataPath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"儲存員工資料失敗: {ex.Message}", "錯誤", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+    }
+}

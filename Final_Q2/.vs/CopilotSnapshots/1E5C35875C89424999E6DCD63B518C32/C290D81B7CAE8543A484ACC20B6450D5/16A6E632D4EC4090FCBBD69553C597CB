@@ -1,0 +1,149 @@
+﻿namespace WinFormsApp1
+{
+    partial class Form1
+    {
+        /// <summary>
+        ///  Required designer variable.
+        /// </summary>
+        private System.ComponentModel.IContainer components = null;
+
+        /// <summary>
+        ///  Clean up any resources being used.
+        /// </summary>
+        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && (components != null))
+            {
+                components.Dispose();
+            }
+            base.Dispose(disposing);
+        }
+
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        ///  Required method for Designer support - do not modify
+        ///  the contents of this method with the code editor.
+        /// </summary>
+        private void InitializeComponent()
+        {
+            this.components = new System.ComponentModel.Container();
+            this.buttonAdd = new System.Windows.Forms.Button();
+            this.buttonDelete = new System.Windows.Forms.Button();
+            this.buttonUpdate = new System.Windows.Forms.Button();
+            this.buttonSearch = new System.Windows.Forms.Button();
+            this.buttonExit = new System.Windows.Forms.Button();
+            this.listBoxEmployees = new System.Windows.Forms.ListBox();
+            this.titleLabel = new System.Windows.Forms.Label();
+            this.labelList = new System.Windows.Forms.Label();
+            this.SuspendLayout();
+            // 
+            // buttonAdd
+            // 
+            this.buttonAdd.Location = new System.Drawing.Point(20, 80);
+            this.buttonAdd.Name = "buttonAdd";
+            this.buttonAdd.Size = new System.Drawing.Size(120, 40);
+            this.buttonAdd.TabIndex = 0;
+            this.buttonAdd.Text = "新增員工";
+            this.buttonAdd.UseVisualStyleBackColor = true;
+            this.buttonAdd.Click += new System.EventHandler(this.buttonAdd_Click);
+            // 
+            // buttonDelete
+            // 
+            this.buttonDelete.Location = new System.Drawing.Point(20, 140);
+            this.buttonDelete.Name = "buttonDelete";
+            this.buttonDelete.Size = new System.Drawing.Size(120, 40);
+            this.buttonDelete.TabIndex = 1;
+            this.buttonDelete.Text = "刪除員工";
+            this.buttonDelete.UseVisualStyleBackColor = true;
+            this.buttonDelete.Click += new System.EventHandler(this.buttonDelete_Click);
+            // 
+            // buttonUpdate
+            // 
+            this.buttonUpdate.Location = new System.Drawing.Point(20, 200);
+            this.buttonUpdate.Name = "buttonUpdate";
+            this.buttonUpdate.Size = new System.Drawing.Size(120, 40);
+            this.buttonUpdate.TabIndex = 2;
+            this.buttonUpdate.Text = "修改員工";
+            this.buttonUpdate.UseVisualStyleBackColor = true;
+            this.buttonUpdate.Click += new System.EventHandler(this.buttonUpdate_Click);
+            // 
+            // buttonSearch
+            // 
+            this.buttonSearch.Location = new System.Drawing.Point(20, 260);
+            this.buttonSearch.Name = "buttonSearch";
+            this.buttonSearch.Size = new System.Drawing.Size(120, 40);
+            this.buttonSearch.TabIndex = 3;
+            this.buttonSearch.Text = "查詢員工";
+            this.buttonSearch.UseVisualStyleBackColor = true;
+            this.buttonSearch.Click += new System.EventHandler(this.buttonSearch_Click);
+            // 
+            // buttonExit
+            // 
+            this.buttonExit.Location = new System.Drawing.Point(20, 320);
+            this.buttonExit.Name = "buttonExit";
+            this.buttonExit.Size = new System.Drawing.Size(120, 40);
+            this.buttonExit.TabIndex = 4;
+            this.buttonExit.Text = "離開";
+            this.buttonExit.UseVisualStyleBackColor = true;
+            this.buttonExit.Click += new System.EventHandler(this.buttonExit_Click);
+            // 
+            // listBoxEmployees
+            // 
+            this.listBoxEmployees.FormattingEnabled = true;
+            this.listBoxEmployees.ItemHeight = 15;
+            this.listBoxEmployees.Location = new System.Drawing.Point(160, 80);
+            this.listBoxEmployees.Name = "listBoxEmployees";
+            this.listBoxEmployees.Size = new System.Drawing.Size(480, 340);
+            this.listBoxEmployees.TabIndex = 5;
+            // 
+            // titleLabel
+            // 
+            this.titleLabel.AutoSize = true;
+            this.titleLabel.Font = new System.Drawing.Font("微軟正黑體", 24F);
+            this.titleLabel.Location = new System.Drawing.Point(20, 20);
+            this.titleLabel.Name = "titleLabel";
+            this.titleLabel.Size = new System.Drawing.Size(240, 40);
+            this.titleLabel.TabIndex = 6;
+            this.titleLabel.Text = "員工資料管理";
+            // 
+            // labelList
+            // 
+            this.labelList.AutoSize = true;
+            this.labelList.Location = new System.Drawing.Point(160, 56);
+            this.labelList.Name = "labelList";
+            this.labelList.Size = new System.Drawing.Size(150, 15);
+            this.labelList.TabIndex = 7;
+            this.labelList.Text = "員工編號與姓名：";
+            // 
+            // Form1
+            // 
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(660, 450);
+            this.Controls.Add(this.labelList);
+            this.Controls.Add(this.titleLabel);
+            this.Controls.Add(this.listBoxEmployees);
+            this.Controls.Add(this.buttonExit);
+            this.Controls.Add(this.buttonSearch);
+            this.Controls.Add(this.buttonUpdate);
+            this.Controls.Add(this.buttonDelete);
+            this.Controls.Add(this.buttonAdd);
+            this.Name = "Form1";
+            this.Text = "EmployeeRoster";
+            this.ResumeLayout(false);
+            this.PerformLayout();
+        }
+
+        #endregion
+
+        private System.Windows.Forms.Button buttonAdd;
+        private System.Windows.Forms.Button buttonDelete;
+        private System.Windows.Forms.Button buttonUpdate;
+        private System.Windows.Forms.Button buttonSearch;
+        private System.Windows.Forms.Button buttonExit;
+        private System.Windows.Forms.ListBox listBoxEmployees;
+        private System.Windows.Forms.Label titleLabel;
+        private System.Windows.Forms.Label labelList;
+    }
+}
